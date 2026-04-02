@@ -29,7 +29,9 @@ export const connectDB = async () => {
         const opts = {
             bufferCommands: false,
             tls: true,
+            tlsAllowInvalidCertificates: false,
             serverSelectionTimeoutMS: 5000,
+            family: 4,
         };
 
         console.log('⏳ Establishing new MongoDB connection (Cached Pattern)...');
