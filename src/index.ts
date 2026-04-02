@@ -1,0 +1,78 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { connectDB } from './config/database.js'; // Added .js extension
+
+// Import Routes (Added .js extensions for ESM)
+import userRoutes from './routes/userRoutes.js';
+import propertyRoutes from './routes/propertyRoutes.js';
+import connectionRoutes from './routes/connectionRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            process.env.FRONTEND_URL
+        ].filter(Boolean) as string[];
+        
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('🚫 CORS Refused Origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// Request logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// Routes
+app.use('/api/users', userRoutes);
+app.use('/api/properties', propertyRoutes);
+app.use('/api/connections', connectionRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/documents', documentRoutes);
+
+// Home & Health
+app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to ApnaPG Node.js API', status: 'online' });
+});
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'healthy', service: 'apnapg-api-node', version: '1.0.0' });
+});
+
+// Connect to Database and Start Server
+const startServer = async () => {
+    try {
+        console.log('⏳ Connecting to MongoDB...');
+        await connectDB();
+        
+        app.listen(PORT, () => {
+            console.log(`🚀 Server is running on port ${PORT}`);
+            console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+        });
+    } catch (err) {
+        console.error('❌ Failed to start server:', err);
+        process.exit(1);
+    }
+};
+
+startServer();
