@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectDB } from './config/database.js'; // Added .js extension
 
 // Import Routes (Added .js extensions for ESM)
@@ -56,7 +57,13 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'healthy', service: 'apnapg-api-node', version: '1.0.0' });
+    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    res.json({ 
+        status: 'healthy', 
+        database: dbStatus,
+        service: 'apnapg-api-node', 
+        version: '1.0.0' 
+    });
 });
 
 // Connect to Database and Start Server
