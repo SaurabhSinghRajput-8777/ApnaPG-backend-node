@@ -29,8 +29,15 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     const clerk_id = decodedToken.sub;
     
     // 2. Extract role strictly from JWT metadata (Stateless RBAC)
+    // We check all possible locations for the metadata/role claim.
+    // Note: Clerk sometimes places metadata in 'publicMetadata' or just 'metadata'.
     const metadata = (decodedToken.metadata || decodedToken.publicMetadata || (decodedToken as any).public_metadata || {}) as any;
-    let role = (metadata.role as string) || (decodedToken as any).role || 'tenant';
+    const unsafeMetadata = (decodedToken as any).unsafe_metadata || {};
+    
+    let role = (metadata.role as string) || 
+               (unsafeMetadata.role as string) || 
+               (decodedToken as any).role || 
+               'tenant';
     
     // 3. Link with our local MongoDB User only to fetch the internal _id
     let user = await User.findOne({ clerk_id });

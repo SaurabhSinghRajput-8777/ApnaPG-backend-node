@@ -1,19 +1,38 @@
 import { Request, Response } from 'express';
+import { clerkClient } from '@clerk/clerk-sdk-node';
 import User from '../models/User.js';
 import { UserSyncSchema, UserUpdateSchema } from '../schemas/userSchema.js';
 
 export const syncUser = async (req: Request, res: Response) => {
   try {
     const validatedData = UserSyncSchema.parse(req.body);
+    
+    // 🛡️ SECURITY: Trust the role from Clerk JWT (via authMiddleware) 
+    // over the role provided by the frontend.
+    const jwtRole = req.user?.role;
+    const finalRole = (jwtRole && jwtRole !== 'tenant') ? jwtRole : validatedData.role;
 
-    // The 'role' from Clerk is saved here for reference and frontend display.
-    // IMPORTANT: This database field is NOT used for backend authorization.
-    // Authorization is strictly handled via Clerk JWT metadata in the middleware.
     const user = await User.findOneAndUpdate(
       { clerk_id: validatedData.clerk_id },
-      { $set: validatedData },
+      { 
+        $set: {
+          ...validatedData,
+          role: finalRole as any
+        }
+      },
       { upsert: true, new: true }
     );
+
+    // 🚀 ASYNC PROMOTION: Promotes the role to Clerk publicMetadata 
+    // This ensures subsequent JWTs issued by Clerk contain the correct role.
+    try {
+      await clerkClient.users.updateUserMetadata(validatedData.clerk_id, {
+        publicMetadata: { role: finalRole }
+      });
+      console.log(`✅ [PROMOTION] Role [${finalRole}] promoted to Clerk for user [${validatedData.clerk_id}]`);
+    } catch (clerkErr: any) {
+      console.error(`❌ [PROMOTION] Failed to update Clerk metadata:`, clerkErr.message);
+    }
 
     return res.status(201).json(user);
   } catch (err: any) {

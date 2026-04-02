@@ -4,11 +4,9 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-// Public webhook
-router.post('/sync', syncUser);
-
 // Protected routes
 router.use(authMiddleware);
+router.post('/sync', syncUser);
 router.get('/me', getMe);
 router.patch('/me', updateMe);
 
