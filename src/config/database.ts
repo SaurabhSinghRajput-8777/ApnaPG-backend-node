@@ -9,6 +9,8 @@ if (!MONGO_URI) {
     throw new Error('❌ MONGO_URI is not defined in environment variables');
 }
 
+mongoose.set('bufferCommands', false);
+
 /** 
  * Global is used here to maintain a cached connection across hot reloads
  * in development and across function invocations in serverless environments.
@@ -30,8 +32,11 @@ export const connectDB = async () => {
             bufferCommands: false,
             tls: true,
             tlsAllowInvalidCertificates: false,
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 10000,
+            connectTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
             family: 4,
+            maxPoolSize: 1,
         };
 
         console.log('⏳ Establishing new MongoDB connection (Cached Pattern)...');

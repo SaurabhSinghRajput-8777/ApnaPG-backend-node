@@ -41,6 +41,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// 🔌 Database Connection Middleware (Ensures DB is connected for every request in serverless)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('❌ Database connection middleware error:', err);
+        res.status(503).json({ error: 'Database Connection Error' });
+    }
+});
+
 // Request logger
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
@@ -96,20 +107,21 @@ app.get('/api/diagnose', async (req, res) => {
 });
 
 // Connect to Database and Start Server
-const startServer = async () => {
-    try {
-        console.log('⏳ Connecting to MongoDB...');
-        await connectDB();
-        
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
-        });
-    } catch (err) {
-        console.error('❌ Failed to start server:', err);
-        process.exit(1);
-    }
-};
-
-startServer();
+// Start server ONLY in local development
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    const startServer = async () => {
+        try {
+            console.log('⏳ (Dev) Checking MongoDB connection...');
+            await connectDB();
+            
+            app.listen(PORT, () => {
+                console.log(`🚀 Dev Server is running on port ${PORT}`);
+            });
+        } catch (err) {
+            console.error('❌ Failed to start dev server:', err);
+        }
+    };
+    startServer();
+}
 
 export default app;
