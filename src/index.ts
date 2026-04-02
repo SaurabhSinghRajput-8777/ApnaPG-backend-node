@@ -56,11 +56,23 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to ApnaPG Node.js API', status: 'online' });
 });
 
-app.get('/health', (req, res) => {
-    const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+app.get('/health', async (req, res) => {
+    // Attempt re-connect if not connected (good for serverless lazy starts)
+    if (mongoose.connection.readyState === 0) {
+        try {
+            await connectDB();
+        } catch (e) {
+            console.error('Health Check: Failed to connect on-demand.');
+        }
+    }
+
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    const readyState = mongoose.connection.readyState;
+    
     res.json({ 
         status: 'healthy', 
-        database: dbStatus,
+        database: states[readyState] || 'unknown',
+        db_ready_state: readyState,
         service: 'apnapg-api-node', 
         version: '1.0.0' 
     });
