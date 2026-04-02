@@ -22,10 +22,12 @@ const corsOptions = {
         const allowedOrigins = [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
-            process.env.FRONTEND_URL
+            process.env.FRONTEND_URL,
+            'https://apna-pg-xi.vercel.app'
         ].filter(Boolean) as string[];
         
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Use startsWith to be more resilient with trailing slashes
+        if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
             callback(null, true);
         } else {
             console.log('🚫 CORS Refused Origin:', origin);
@@ -86,7 +88,6 @@ const startServer = async () => {
         
         app.listen(PORT, () => {
             console.log(`🚀 Server is running on port ${PORT}`);
-            console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
         });
     } catch (err) {
         console.error('❌ Failed to start server:', err);
