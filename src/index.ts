@@ -10,6 +10,7 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import connectionRoutes from './routes/connectionRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import { runConnectivityDiagnostics } from './utils/connectivityDebugger.js';
 
 dotenv.config();
 
@@ -78,6 +79,20 @@ app.get('/health', async (req, res) => {
         service: 'apnapg-api-node', 
         version: '1.0.0' 
     });
+});
+
+app.get('/api/diagnose', async (req, res) => {
+    const MONGO_URI = process.env.MONGO_URI;
+    if (!MONGO_URI) {
+        return res.status(500).json({ error: 'MONGO_URI is not defined' });
+    }
+
+    try {
+        const diagnostics = await runConnectivityDiagnostics(MONGO_URI);
+        res.json(diagnostics);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Connect to Database and Start Server
