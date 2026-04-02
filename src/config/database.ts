@@ -9,25 +9,42 @@ if (!MONGO_URI) {
     throw new Error('❌ MONGO_URI is not defined in environment variables');
 }
 
+/** 
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development and across function invocations in serverless environments.
+ */
+let cached = (global as any).mongoose;
+
+if (!cached) {
+    cached = (global as any).mongoose = { conn: null, promise: null };
+}
+
 export const connectDB = async () => {
-    // Check if we have a connection and if it's already ready
-    if (mongoose.connection.readyState >= 1) {
-        console.log('✅ Reusing existing MongoDB connection...');
-        return;
+    if (cached.conn) {
+        console.log('✅ Reusing cached MongoDB connection...');
+        return cached.conn;
+    }
+
+    if (!cached.promise) {
+        const opts = {
+            bufferCommands: false,
+            serverSelectionTimeoutMS: 5000,
+        };
+
+        console.log('⏳ Establishing new MongoDB connection (Cached Pattern)...');
+        cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
+            console.log('🚀 MongoDB Connected successfully!');
+            return mongoose;
+        });
     }
 
     try {
-        console.log('⏳ Establishing new MongoDB connection...');
-        await mongoose.connect(MONGO_URI, {
-            serverSelectionTimeoutMS: 5000, // Faster timeout for serverless
-            connectTimeoutMS: 10000,
-        });
-        console.log('🚀 MongoDB Connected successfully!');
-    } catch (err) {
-        console.error('❌ MongoDB connection error:', err);
-        // Important: In serverless, we don't always want to exit(1) 
-        // as it might crash the whole host function.
-        // We'll let the error propagate.
-        throw err;
+        cached.conn = await cached.promise;
+    } catch (e) {
+        cached.promise = null;
+        console.error('❌ MongoDB connection error:', e);
+        throw e;
     }
+
+    return cached.conn;
 };
