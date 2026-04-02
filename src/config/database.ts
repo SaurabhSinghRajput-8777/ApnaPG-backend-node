@@ -28,6 +28,7 @@ export const connectDB = async () => {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
+            tls: true,
             serverSelectionTimeoutMS: 5000,
         };
 
