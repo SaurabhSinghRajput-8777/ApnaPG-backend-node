@@ -22,7 +22,11 @@ export const generateAIResponse = async (prompt: string): Promise<string> => {
     
     return text;
   } catch (error: any) {
-    console.error("❌ Gemini AI Error:", error.message);
-    throw new Error("Failed to generate AI response. Please ensure your API key is valid.");
+    console.error("❌ [GEMINI SERVICE ERROR]:", error);
+    // Log helpful details if it's a known API error
+    if (error.response) {
+      console.error("Details:", JSON.stringify(error.response, null, 2));
+    }
+    throw new Error(error.message || "Failed to generate AI response.");
   }
 };
