@@ -10,6 +10,7 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import connectionRoutes from './routes/connectionRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 import { runConnectivityDiagnostics } from './utils/connectivityDebugger.js';
 
 dotenv.config();
@@ -64,6 +65,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Home & Health
 app.get('/', (req, res) => {
