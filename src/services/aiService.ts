@@ -3,13 +3,20 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
 /**
  * Generates a response from Gemini AI.
  * Acts as a PG assistant to help users with their queries.
  */
 export const generateAIResponse = async (prompt: string): Promise<string> => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  if (!apiKey || apiKey === "your_gemini_api_key_here") {
+    console.error("❌ Gemini API Key is missing or invalid in .env");
+    throw new Error("Gemini API Key is not configured correctly on the server.");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+
   try {
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",

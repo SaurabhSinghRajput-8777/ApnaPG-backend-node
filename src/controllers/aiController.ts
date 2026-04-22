@@ -12,7 +12,7 @@ export const handleAIChat = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    console.log(`🤖 AI Request: ${prompt}`);
+    console.log(`🤖 [AI REQUEST] User: [${req.user?._id}] Role: [${req.user?.role}] Prompt: "${prompt}"`);
     const assistantResponse = await generateAIResponse(prompt);
     
     return res.json({ response: assistantResponse });
