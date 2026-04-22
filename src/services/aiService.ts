@@ -19,7 +19,7 @@ export const generateAIResponse = async (prompt: string): Promise<string> => {
 
   try {
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: "You are the ApnaPG Assistant, a helpful and friendly AI specialized in helping people find the perfect Paying Guest (PG) accommodation. You can answer questions about PG life, general locations in India, what to look for in a PG, and help users navigate the ApnaPG platform. Keep your responses concise and professional."
     });
 
